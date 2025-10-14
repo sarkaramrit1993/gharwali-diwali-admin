@@ -647,6 +647,20 @@
                         <p id="addPlayerStatus" style="margin: 10px 0 0 0; font-weight: 600; display: none;"></p>
                     </div>
                     
+                    <!-- Sync Default Players -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px dashed #ffd700;">
+                        <h3 style="margin: 0 0 10px 0; color: #f59e0b;">🔄 Sync Default Players to Firebase</h3>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+                            Push the complete default player list (31 players including Deepika) to Firebase. 
+                            This will overwrite the current Firebase list with all default names.
+                        </p>
+                        <button onclick="syncDefaultPlayersToFirebase()" 
+                                style="padding: 12px 24px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                            ⬆️ Sync Default Players Now
+                        </button>
+                        <p id="syncPlayerStatus" style="margin: 10px 0 0 0; font-weight: 600; display: none;"></p>
+                    </div>
+                    
                     <!-- Current Players List -->
                     <div style="background: white; padding: 20px; border-radius: 8px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -668,7 +682,7 @@
             <div class="leaderboard-section" style="margin-top: 30px;">
                 <h2 class="section-title">🎯 Manual Team Assignment</h2>
                 <p style="text-align: center; color: #666; margin-bottom: 20px;">
-                    Manually assign players to teams. Ensure exactly 5 players per team.
+                    Manually assign players to teams. Standard teams: 5 players. ⭐ Teams with Swati: 6 players.
                 </p>
                 <div style="background: #f8f9fa; border-radius: 12px; padding: 25px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -1081,12 +1095,21 @@
             // Display players by team
             container.innerHTML = teamNames.map(team => {
                 const players = teamPlayers[team] || [];
+                // Check if Swati is in this team (6 players allowed, otherwise 5)
+                const hasSwati = players.some(name => name === 'Swati');
+                const maxCapacity = hasSwati ? 6 : 5;
+                const capacityColor = players.length >= maxCapacity ? '#e74c3c' : '#27ae60';
+                const capacityIndicator = hasSwati ? '👥 Max: 6 (Swati\'s team)' : '👥 Max: 5';
+                
                 return `
                     <div class="team-players">
-                        <h3>${team} (${players.length} ${players.length === 1 ? 'player' : 'players'})</h3>
+                        <h3>${team} (${players.length}/${maxCapacity} players)</h3>
+                        <div style="font-size: 12px; color: ${capacityColor}; margin-bottom: 8px; font-weight: 600;">
+                            ${capacityIndicator} ${players.length > maxCapacity ? '⚠️ OVER CAPACITY!' : players.length === maxCapacity ? '✅ FULL' : ''}
+                        </div>
                         <div class="players-list">
                             ${players.length > 0 
-                                ? players.map(name => `<span class="player-badge">👤 ${name}</span>`).join('')
+                                ? players.map(name => `<span class="player-badge">${name === 'Swati' ? '⭐ ' : '👤 '}${name}</span>`).join('')
                                 : '<span class="no-players">No active players</span>'
                             }
                         </div>
@@ -1604,6 +1627,55 @@
             }
         }
         
+        // Sync default player list to Firebase
+        window.syncDefaultPlayersToFirebase = async function() {
+            const statusEl = document.getElementById('syncPlayerStatus');
+            
+            if (!database || !window.firebaseDB) {
+                statusEl.textContent = '❌ Database not ready';
+                statusEl.style.color = '#e74c3c';
+                statusEl.style.display = 'block';
+                return;
+            }
+            
+            const defaultPlayers = [
+                'Aayush', 'Aayushi', 'Abhishek', 'Adwait', 'Arnab', 'Avirup', 'Biranchi',
+                'Deepali', 'Deepika', 'Dipendu', 'Harshal', 'Indira', 'Kevin', 'Maria',
+                'Meet', 'Minal', 'Namy', 'Nikunj', 'Prashanth', 'Priyanka', 'Ryan',
+                'Sampada', 'Sharan', 'Shaswat', 'Shreeya', 'Sid', 'Sophia', 'Supriya',
+                'Swati', 'Tithi', 'Vraja'
+            ];
+            
+            try {
+                statusEl.textContent = '⏳ Syncing players to Firebase...';
+                statusEl.style.color = '#3498db';
+                statusEl.style.display = 'block';
+                
+                const { ref, set } = window.firebaseDB;
+                const playersRef = ref(database, 'validPlayerNames');
+                
+                await set(playersRef, defaultPlayers);
+                
+                statusEl.textContent = `✅ Successfully synced ${defaultPlayers.length} players to Firebase!`;
+                statusEl.style.color = '#27ae60';
+                
+                // Auto-refresh the player list
+                setTimeout(() => {
+                    loadValidPlayers();
+                }, 1000);
+                
+                // Hide status after 5 seconds
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 5000);
+                
+            } catch (error) {
+                console.error('Error syncing players:', error);
+                statusEl.textContent = '❌ Error syncing to Firebase';
+                statusEl.style.color = '#e74c3c';
+            }
+        }
+        
         // Load and display player team assignments
         window.loadPlayerAssignments = async function() {
             if (!database || !window.firebaseDB) {
@@ -1642,11 +1714,21 @@
                 
                 // Update status display
                 const statusEl = document.getElementById('teamCountStatus');
-                const allValid = Object.values(teamCounts).every(count => count === 5);
                 const unassignedCount = teamPlayers['Unassigned'] ? teamPlayers['Unassigned'].length : 0;
                 
+                // Check if all teams have the correct number of players
+                let allValid = true;
+                teamNames.forEach(team => {
+                    const players = teamPlayers[team] || [];
+                    const hasSwati = players.some(p => p === 'Swati');
+                    const expectedCount = hasSwati ? 6 : 5;
+                    if (teamCounts[team] !== expectedCount) {
+                        allValid = false;
+                    }
+                });
+                
                 if (allValid && unassignedCount === 0) {
-                    statusEl.innerHTML = '<span style="color: #27ae60;">✅ All teams have exactly 5 players!</span>';
+                    statusEl.innerHTML = '<span style="color: #27ae60;">✅ All teams have correct player counts!</span>';
                 } else {
                     statusEl.innerHTML = `<span style="color: #e74c3c;">⚠️ ${unassignedCount} unassigned, Teams: ${Object.entries(teamCounts).map(([t, c]) => `${t}(${c})`).join(', ')}</span>`;
                 }
@@ -1657,17 +1739,23 @@
                 // Show each team
                 teamNames.forEach(team => {
                     const players = teamPlayers[team] || [];
-                    const isValid = players.length === 5;
+                    const hasSwati = players.some(p => p === 'Swati');
+                    const maxCapacity = hasSwati ? 6 : 5;
+                    const isValid = players.length === maxCapacity;
+                    const capacityColor = players.length === maxCapacity ? '#27ae60' : players.length > maxCapacity ? '#e74c3c' : '#f39c12';
                     html += `
-                        <div style="background: white; border-radius: 10px; padding: 15px; border: 2px solid ${isValid ? '#27ae60' : '#e74c3c'};">
-                            <h3 style="color: #667eea; margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="background: white; border-radius: 10px; padding: 15px; border: 2px solid ${capacityColor};">
+                            <h3 style="color: #667eea; margin: 0 0 5px 0; display: flex; justify-content: space-between; align-items: center;">
                                 <span>${team}</span>
-                                <span style="font-size: 14px; color: ${isValid ? '#27ae60' : '#e74c3c'};">${players.length}/5</span>
+                                <span style="font-size: 14px; color: ${capacityColor};">${players.length}/${maxCapacity}</span>
                             </h3>
+                            <div style="font-size: 11px; color: ${hasSwati ? '#f59e0b' : '#999'}; margin-bottom: 10px;">
+                                ${hasSwati ? '⭐ Swati\'s team (6 players max)' : 'Standard team (5 players max)'}
+                            </div>
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 ${players.map(p => `
-                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 6px;">
-                                        <span style="font-weight: 500;">${p}</span>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: ${p === 'Swati' ? '#fff7ed' : '#f8f9fa'}; border-radius: 6px;">
+                                        <span style="font-weight: 500;">${p === 'Swati' ? '⭐ ' : ''}${p}</span>
                                         <select onchange="updatePlayerTeam('${p}', this.value)" style="padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
                                             <option value="">Move to...</option>
                                             ${teamNames.filter(t => t !== team).map(t => `<option value="${t}">${t}</option>`).join('')}
