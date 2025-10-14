@@ -1462,22 +1462,44 @@
             const countEl = document.getElementById('playerCount');
             
             container.innerHTML = '<p style="text-align: center; color: #999;">🔄 Loading players...</p>';
+            countEl.textContent = '';
             
+            // Check if Firebase is ready
             if (!database || !window.firebaseDB) {
-                container.innerHTML = '<p style="text-align: center; color: #e74c3c;">⚠️ Database not ready</p>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; background: #fff3cd; border-radius: 8px; border: 2px solid #ffc107;">
+                        <p style="color: #856404; margin-bottom: 10px; font-weight: 600;">⚠️ Database not ready yet</p>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Firebase is still initializing. Please wait a moment.</p>
+                        <button onclick="loadValidPlayers()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                            🔄 Try Again
+                        </button>
+                    </div>
+                `;
+                console.error('Firebase not initialized:', {database, firebaseDB: window.firebaseDB});
                 return;
             }
             
             try {
-                const { ref, get } = window.firebaseDB;
+                const { ref, get, set } = window.firebaseDB;
                 const playersRef = ref(database, 'validPlayerNames');
+                
+                console.log('🔄 Fetching players from Firebase...');
                 const snapshot = await get(playersRef);
+                console.log('✅ Firebase snapshot received:', snapshot.exists());
                 
                 let players = [];
                 
                 if (snapshot.exists()) {
                     players = snapshot.val();
+                    console.log('✅ Loaded players from Firebase:', players.length, 'players');
+                    
+                    // Ensure it's an array
+                    if (!Array.isArray(players)) {
+                        console.warn('⚠️ Players data is not an array, converting...');
+                        players = Object.values(players);
+                    }
                 } else {
+                    console.log('ℹ️ No players in Firebase, initializing with defaults...');
                     // Initialize with default player list
                     players = [
                         'Aayush', 'Aayushi', 'Abhishek', 'Adwait', 'Arnab', 'Avirup', 'Biranchi',
@@ -1487,9 +1509,30 @@
                         'Swati', 'Tithi', 'Vraja'
                     ];
                     
-                    // Save default list to Firebase
-                    const { set } = window.firebaseDB;
-                    await set(playersRef, players);
+                    try {
+                        // Save default list to Firebase
+                        console.log('💾 Saving default players to Firebase...');
+                        await set(playersRef, players);
+                        console.log('✅ Default players saved successfully');
+                    } catch (saveError) {
+                        console.error('❌ Error saving default players:', saveError);
+                        container.innerHTML = `
+                            <div style="text-align: center; padding: 20px; background: #ffe0e0; border-radius: 8px; border: 2px solid #e74c3c;">
+                                <p style="color: #c00; margin-bottom: 10px; font-weight: 600;">❌ Permission Error</p>
+                                <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Cannot write to Firebase. Please check:</p>
+                                <ul style="text-align: left; max-width: 400px; margin: 0 auto 15px auto; color: #666; font-size: 13px;">
+                                    <li>Firebase Realtime Database rules allow write access</li>
+                                    <li>You have the correct Firebase configuration</li>
+                                    <li>Your network connection is working</li>
+                                </ul>
+                                <p style="color: #999; font-size: 12px; margin-bottom: 15px;">Error: ${saveError.message}</p>
+                                <button onclick="loadValidPlayers()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                                    🔄 Try Again
+                                </button>
+                            </div>
+                        `;
+                        return;
+                    }
                 }
                 
                 // Sort alphabetically
@@ -1513,9 +1556,21 @@
                     </div>
                 `).join('');
                 
+                console.log('✅ Player list displayed successfully');
+                
             } catch (error) {
-                console.error('Error loading players:', error);
-                container.innerHTML = '<p style="text-align: center; color: #e74c3c;">❌ Error loading players</p>';
+                console.error('❌ Error loading players:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; background: #ffe0e0; border-radius: 8px; border: 2px solid #e74c3c;">
+                        <p style="color: #c00; margin-bottom: 10px; font-weight: 600;">❌ Error Loading Players</p>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Something went wrong while loading the player list.</p>
+                        <p style="color: #999; font-size: 12px; margin-bottom: 15px;">Error: ${error.message || error}</p>
+                        <button onclick="loadValidPlayers()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                            🔄 Try Again
+                        </button>
+                        <p style="color: #999; font-size: 11px; margin-top: 15px;">Check the browser console (F12) for more details</p>
+                    </div>
+                `;
             }
         }
         
