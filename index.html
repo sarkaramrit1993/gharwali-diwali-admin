@@ -1080,22 +1080,26 @@
         function updatePlayersDisplay(players) {
             const container = document.getElementById('playersContainer');
             
-            // Group players by team and track player name counts
+            // Group players by team with counts for each name
             const teamPlayers = {};
-            const playerNameCounts = {};
+            const globalPlayerNameCounts = {};
             const duplicateNames = new Set();
             
-            teamNames.forEach(team => teamPlayers[team] = []);
+            teamNames.forEach(team => teamPlayers[team] = {});
             
             Object.values(players).forEach(player => {
                 if (player.isActive && player.team) {
                     if (teamPlayers[player.team]) {
-                        teamPlayers[player.team].push(player.name);
+                        // Count occurrences of each name within the team
+                        if (!teamPlayers[player.team][player.name]) {
+                            teamPlayers[player.team][player.name] = 0;
+                        }
+                        teamPlayers[player.team][player.name]++;
                     }
                     
-                    // Track how many times each name appears
-                    playerNameCounts[player.name] = (playerNameCounts[player.name] || 0) + 1;
-                    if (playerNameCounts[player.name] > 1) {
+                    // Track how many times each name appears globally
+                    globalPlayerNameCounts[player.name] = (globalPlayerNameCounts[player.name] || 0) + 1;
+                    if (globalPlayerNameCounts[player.name] > 1) {
                         duplicateNames.add(player.name);
                     }
                 }
@@ -1105,7 +1109,7 @@
             let alertHTML = '';
             if (duplicateNames.size > 0) {
                 const duplicateList = Array.from(duplicateNames).map(name => 
-                    `${name} (${playerNameCounts[name]}x)`
+                    `${name} (${globalPlayerNameCounts[name]}x)`
                 ).join(', ');
                 
                 alertHTML = `
@@ -1126,28 +1130,33 @@
 
             // Display players by team
             const teamsHTML = teamNames.map(team => {
-                const players = teamPlayers[team] || [];
+                const playerCounts = teamPlayers[team] || {};
+                const playerNames = Object.keys(playerCounts);
+                const uniquePlayerCount = playerNames.length;
+                
                 // Check if Swati is in this team (6 players allowed, otherwise 5)
-                const hasSwati = players.some(name => name === 'Swati');
+                const hasSwati = playerNames.includes('Swati');
                 const maxCapacity = hasSwati ? 6 : 5;
-                const capacityColor = players.length >= maxCapacity ? '#e74c3c' : '#27ae60';
+                const capacityColor = uniquePlayerCount >= maxCapacity ? '#e74c3c' : '#27ae60';
                 const capacityIndicator = hasSwati ? '👥 Max: 6 (Swati\'s team)' : '👥 Max: 5';
                 
                 return `
                     <div class="team-players">
-                        <h3>${team} (${players.length}/${maxCapacity} players)</h3>
+                        <h3>${team} (${uniquePlayerCount}/${maxCapacity} players)</h3>
                         <div style="font-size: 12px; color: ${capacityColor}; margin-bottom: 8px; font-weight: 600;">
-                            ${capacityIndicator} ${players.length > maxCapacity ? '⚠️ OVER CAPACITY!' : players.length === maxCapacity ? '✅ FULL' : ''}
+                            ${capacityIndicator} ${uniquePlayerCount > maxCapacity ? '⚠️ OVER CAPACITY!' : uniquePlayerCount === maxCapacity ? '✅ FULL' : ''}
                         </div>
                         <div class="players-list">
-                            ${players.length > 0 
-                                ? players.map(name => {
-                                    const isDuplicate = duplicateNames.has(name);
+                            ${uniquePlayerCount > 0 
+                                ? playerNames.map(name => {
+                                    const count = playerCounts[name];
+                                    const isDuplicate = count > 1 || duplicateNames.has(name);
                                     const badgeStyle = isDuplicate 
                                         ? 'background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); animation: pulse 1s infinite;' 
                                         : '';
                                     const icon = name === 'Swati' ? '⭐ ' : (isDuplicate ? '⚠️ ' : '👤 ');
-                                    return `<span class="player-badge" style="${badgeStyle}">${icon}${name}</span>`;
+                                    const displayName = count > 1 ? `${name} (${count}x)` : name;
+                                    return `<span class="player-badge" style="${badgeStyle}">${icon}${displayName}</span>`;
                                 }).join('')
                                 : '<span class="no-players">No active players</span>'
                             }
