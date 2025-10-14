@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎯 Gharwali Diwali - Admin Dashboard</title>
+    <title>🎯 Gharwali Diwali ⚡ - Admin Dashboard</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
     <style>
@@ -476,7 +476,7 @@
         <!-- Admin Login Screen -->
         <div class="login-screen" id="loginScreen">
             <h1 class="admin-title">🎯 Admin Dashboard</h1>
-            <p class="admin-subtitle">Gharwali Diwali</p>
+            <p class="admin-subtitle">Gharwali Diwali ⚡</p>
             <div class="login-form">
                 <div class="form-group">
                     <label for="adminPassword">Admin Password</label>
@@ -1446,12 +1446,13 @@
             }
         }
 
-        // All 30 player names
+        // All 31 player names (alphabetically sorted)
         const allPlayerNames = [
-            'Aayush', 'Aayushi', 'Abhishek', 'Adwait', 'Arnab', 'Tithi', 'Avirup', 'Biranchi',
-            'Deepali', 'Indira', 'Kevin', 'Meet', 'Namy', 'Nikunj', 'Prashanth', 'Priyanka',
-            'Ryan', 'Sampada', 'Sharan', 'Shaswat', 'Shreeya', 'Sid', 'Supriya', 'Swati',
-            'Vraja', 'Dipendu', 'Sophia', 'Harshal', 'Minal', 'Maria'
+            'Aayush', 'Aayushi', 'Abhishek', 'Adwait', 'Arnab', 'Avirup', 'Biranchi',
+            'Deepali', 'Deepika', 'Dipendu', 'Harshal', 'Indira', 'Kevin', 'Maria',
+            'Meet', 'Minal', 'Namy', 'Nikunj', 'Prashanth', 'Priyanka', 'Ryan',
+            'Sampada', 'Sharan', 'Shaswat', 'Shreeya', 'Sid', 'Sophia', 'Supriya',
+            'Swati', 'Tithi', 'Vraja'
         ];
 
         // Player Management Functions
@@ -1882,11 +1883,26 @@
             }
         }
 
-        // Auto-assign all players evenly (5 per team)
+        // Consistent hash function for deterministic team assignment
+        function hashPlayerName(name) {
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                const char = name.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            return Math.abs(hash);
+        }
+
+        // Auto-assign all players using consistent algorithm (Swati's team gets 6, others get 5)
         window.autoAssignPlayers = async function() {
             const confirmed = confirm(
-                `✨ Auto-Assign All Players\n\n` +
-                `This will automatically distribute all 30 players evenly across 6 teams (5 players each).\n\n` +
+                `✨ Auto-Assign All Players (Deterministic)\n\n` +
+                `This will use a consistent algorithm to distribute:\n` +
+                `• Swati's team: 6 players\n` +
+                `• Other teams: 5 players each\n` +
+                `• Total: 31 players across 6 teams\n\n` +
+                `The same algorithm will produce the same teams every time.\n\n` +
                 `Existing assignments will be overwritten.\n\n` +
                 `Continue?`
             );
@@ -1901,25 +1917,65 @@
             const { ref, set } = window.firebaseDB;
             
             try {
-                // Shuffle players for random distribution
-                const shuffled = [...allPlayerNames].sort(() => Math.random() - 0.5);
+                // Step 1: Determine which team gets Swati (using hash of "Swati")
+                const swatiHash = hashPlayerName('Swati');
+                const swatiTeamIndex = swatiHash % teamNames.length;
+                const swatiTeam = teamNames[swatiTeamIndex];
                 
-                // Assign 5 players to each team
-                const assignments = {};
-                teamNames.forEach((team, teamIndex) => {
-                    const startIdx = teamIndex * 5;
-                    const teamPlayers = shuffled.slice(startIdx, startIdx + 5);
-                    teamPlayers.forEach(player => {
-                        assignments[player] = team;
-                    });
+                console.log(`📌 Swati assigned to: ${swatiTeam} (team ${swatiTeamIndex})`);
+                
+                // Step 2: Create team capacity tracker
+                const teamCapacity = {};
+                teamNames.forEach(team => {
+                    teamCapacity[team] = team === swatiTeam ? 6 : 5;
                 });
+                
+                const teamCounts = {};
+                teamNames.forEach(team => teamCounts[team] = 0);
+                
+                // Step 3: Assign Swati first
+                const assignments = {
+                    'Swati': swatiTeam
+                };
+                teamCounts[swatiTeam] = 1;
+                
+                // Step 4: Sort remaining players alphabetically for consistent ordering
+                const remainingPlayers = allPlayerNames
+                    .filter(name => name !== 'Swati')
+                    .sort();
+                
+                // Step 5: Assign remaining players using consistent hash
+                remainingPlayers.forEach(playerName => {
+                    const hash = hashPlayerName(playerName);
+                    
+                    // Find team with available slots (consistent preference order)
+                    for (let offset = 0; offset < teamNames.length; offset++) {
+                        const teamIndex = (hash + offset) % teamNames.length;
+                        const team = teamNames[teamIndex];
+                        
+                        if (teamCounts[team] < teamCapacity[team]) {
+                            assignments[playerName] = team;
+                            teamCounts[team]++;
+                            break;
+                        }
+                    }
+                });
+                
+                // Verify counts
+                console.log('📊 Final team counts:', teamCounts);
                 
                 // Save all assignments
                 const assignmentsRef = ref(database, 'playerTeamAssignments');
                 await set(assignmentsRef, assignments);
                 
-                console.log('✅ Auto-assigned all players');
-                alert('✅ Successfully assigned all 30 players to teams (5 each)!');
+                console.log('✅ Auto-assigned all players with algorithm');
+                
+                // Show summary
+                const summary = Object.entries(teamCounts)
+                    .map(([team, count]) => `${team}: ${count}${team === swatiTeam ? ' ⭐' : ''}`)
+                    .join('\n');
+                
+                alert(`✅ Successfully assigned all 31 players!\n\n${summary}`);
                 
                 // Reload to show new assignments
                 await loadPlayerAssignments();
