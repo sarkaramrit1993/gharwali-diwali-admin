@@ -1080,8 +1080,11 @@
         function updatePlayersDisplay(players) {
             const container = document.getElementById('playersContainer');
             
-            // Group players by team
+            // Group players by team and track player name counts
             const teamPlayers = {};
+            const playerNameCounts = {};
+            const duplicateNames = new Set();
+            
             teamNames.forEach(team => teamPlayers[team] = []);
             
             Object.values(players).forEach(player => {
@@ -1089,11 +1092,40 @@
                     if (teamPlayers[player.team]) {
                         teamPlayers[player.team].push(player.name);
                     }
+                    
+                    // Track how many times each name appears
+                    playerNameCounts[player.name] = (playerNameCounts[player.name] || 0) + 1;
+                    if (playerNameCounts[player.name] > 1) {
+                        duplicateNames.add(player.name);
+                    }
                 }
             });
 
+            // Build alert message if duplicates found
+            let alertHTML = '';
+            if (duplicateNames.size > 0) {
+                const duplicateList = Array.from(duplicateNames).map(name => 
+                    `${name} (${playerNameCounts[name]}x)`
+                ).join(', ');
+                
+                alertHTML = `
+                    <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+                        <h3 style="color: #856404; margin: 0 0 10px 0; font-size: 18px;">⚠️ DUPLICATE ACTIVE PLAYERS DETECTED!</h3>
+                        <p style="color: #856404; margin: 0 0 15px 0; font-size: 14px;">
+                            The same player name is logged in multiple times. This may cause issues.
+                        </p>
+                        <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <strong style="color: #e74c3c;">Duplicates:</strong> ${duplicateList}
+                        </div>
+                        <p style="color: #666; font-size: 13px; margin: 0;">
+                            💡 Ask duplicate users to close extra browser tabs/windows or wait for inactive sessions to expire.
+                        </p>
+                    </div>
+                `;
+            }
+
             // Display players by team
-            container.innerHTML = teamNames.map(team => {
+            const teamsHTML = teamNames.map(team => {
                 const players = teamPlayers[team] || [];
                 // Check if Swati is in this team (6 players allowed, otherwise 5)
                 const hasSwati = players.some(name => name === 'Swati');
@@ -1109,13 +1141,22 @@
                         </div>
                         <div class="players-list">
                             ${players.length > 0 
-                                ? players.map(name => `<span class="player-badge">${name === 'Swati' ? '⭐ ' : '👤 '}${name}</span>`).join('')
+                                ? players.map(name => {
+                                    const isDuplicate = duplicateNames.has(name);
+                                    const badgeStyle = isDuplicate 
+                                        ? 'background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); animation: pulse 1s infinite;' 
+                                        : '';
+                                    const icon = name === 'Swati' ? '⭐ ' : (isDuplicate ? '⚠️ ' : '👤 ');
+                                    return `<span class="player-badge" style="${badgeStyle}">${icon}${name}</span>`;
+                                }).join('')
                                 : '<span class="no-players">No active players</span>'
                             }
                         </div>
                     </div>
                 `;
             }).join('');
+            
+            container.innerHTML = alertHTML + teamsHTML;
         }
 
         function updateChallengeButtons(status) {
