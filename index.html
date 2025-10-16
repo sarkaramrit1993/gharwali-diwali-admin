@@ -770,7 +770,7 @@
             <div class="leaderboard-section" style="margin-top: 30px;">
                 <h2 class="section-title">🏠 Challenge 4 - Team Markings</h2>
                 <p style="text-align: center; color: #666; margin-bottom: 20px;">
-                    View all team markings and progress in the House Marker challenge. Manually validate and assign scores based on accuracy.
+                    View all team markings and progress in The Great Item Hunt challenge. Manually validate and assign scores based on accuracy.
                 </p>
                 <button onclick="loadAllTeamMarkings()" 
                         style="display: block; margin: 0 auto 20px; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s;">
@@ -1055,23 +1055,174 @@
                 card.className = 'team-card';
                 card.innerHTML = `
                     <div class="team-name">${team}</div>
-                    ${challenges.map((ch, idx) => `
-                        <div class="challenge-input">
-                            <label>Challenge ${idx + 1}</label>
-                            <input 
-                                type="number" 
-                                id="score-${team}-${ch}" 
-                                placeholder="0"
-                                min="0"
-                                step="1"
-                                onchange="updateScore('${team}', '${ch}', this.value)"
-                            >
+                    
+                    <!-- Challenge 1: Two Games -->
+                    <div class="challenge-input" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                        <label style="font-weight: bold; color: #667eea; margin-bottom: 8px; display: block;">Challenge 1: Memory Challenge</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div>
+                                <label style="font-size: 12px; color: #666;">Game 1 (1st=50, Last=0)</label>
+                                <input 
+                                    type="number" 
+                                    id="score-${team}-ch1-game1" 
+                                    placeholder="0"
+                                    min="0"
+                                    max="50"
+                                    step="1"
+                                    onchange="updateGameScore('${team}', 'ch1', 'game1', this.value)"
+                                    style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 6px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: #666;">Game 2 (5pts/right)</label>
+                                <input 
+                                    type="number" 
+                                    id="score-${team}-ch1-game2" 
+                                    placeholder="0"
+                                    min="0"
+                                    step="5"
+                                    onchange="updateGameScore('${team}', 'ch1', 'game2', this.value)"
+                                    style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 6px;">
+                            </div>
                         </div>
-                    `).join('')}
-                    <button class="save-btn" onclick="saveTeamScores('${team}')">💾 Save All</button>
+                        <div style="margin-top: 6px; font-weight: bold; text-align: center; color: #667eea;">
+                            Total: <span id="total-${team}-ch1">0</span> pts
+                        </div>
+                    </div>
+                    
+                    <!-- Challenge 2: Two Games -->
+                    <div class="challenge-input" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                        <label style="font-weight: bold; color: #f59e0b; margin-bottom: 8px; display: block;">Challenge 2: Party Games</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div>
+                                <label style="font-size: 12px; color: #666;">Game 1 (Winner=20)</label>
+                                <input 
+                                    type="number" 
+                                    id="score-${team}-ch2-game1" 
+                                    placeholder="0"
+                                    min="0"
+                                    max="20"
+                                    step="20"
+                                    onchange="updateGameScore('${team}', 'ch2', 'game1', this.value)"
+                                    style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 6px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: #666;">Game 2 (+5/-5)</label>
+                                <input 
+                                    type="number" 
+                                    id="score-${team}-ch2-game2" 
+                                    placeholder="0"
+                                    step="5"
+                                    onchange="updateGameScore('${team}', 'ch2', 'game2', this.value)"
+                                    style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 6px;">
+                            </div>
+                        </div>
+                        <div style="margin-top: 6px; font-weight: bold; text-align: center; color: #f59e0b;">
+                            Total: <span id="total-${team}-ch2">0</span> pts
+                        </div>
+                    </div>
+                    
+                    <!-- Challenge 3: Trivia Competition -->
+                    <div class="challenge-input" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                        <label style="font-weight: bold; color: #51cf66; margin-bottom: 8px; display: block;">Challenge 3: Trivia Competition</label>
+                        <p style="font-size: 11px; color: #666; margin: 0 0 8px 0;">6 sets × 6 questions | All frontline players compete for each question</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div>
+                                <label style="font-size: 12px; color: #666;">Fastest Correct (5pts each)</label>
+                                <input 
+                                    type="number" 
+                                    id="score-${team}-ch3-frontline" 
+                                    placeholder="0"
+                                    min="0"
+                                    max="30"
+                                    step="5"
+                                    onchange="updateGameScore('${team}', 'ch3', 'frontline', this.value)"
+                                    style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 6px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: #666;">Team Fallback (3pts each)</label>
+                                <input 
+                                    type="number" 
+                                    id="score-${team}-ch3-team" 
+                                    placeholder="0"
+                                    min="0"
+                                    max="18"
+                                    step="3"
+                                    onchange="updateGameScore('${team}', 'ch3', 'team', this.value)"
+                                    style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 6px;">
+                            </div>
+                        </div>
+                        <div style="margin-top: 6px; font-weight: bold; text-align: center; color: #51cf66;">
+                            Total: <span id="total-${team}-ch3">0</span> pts
+                        </div>
+                    </div>
+                    
+                    <!-- Challenge 4: Simple Total -->
+                    <div class="challenge-input">
+                        <label>Challenge 4: The Great Item Hunt</label>
+                        <input 
+                            type="number" 
+                            id="score-${team}-ch4" 
+                            placeholder="0"
+                            min="0"
+                            step="1"
+                            onchange="updateScore('${team}', 'ch4', this.value)"
+                        >
+                    </div>
+                    
+                    <button class="save-btn" onclick="saveTeamScores('${team}')">💾 Save All Scores</button>
                 `;
                 grid.appendChild(card);
             });
+        }
+
+        // New function to handle game-level scoring
+        window.updateGameScore = function(team, challenge, game, value) {
+            const gameValue = parseInt(value) || 0;
+            
+            // Update the input value
+            const inputId = `score-${team}-${challenge}-${game}`;
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.value = gameValue;
+            }
+            
+            // Calculate total for this challenge
+            let total = 0;
+            if (challenge === 'ch1') {
+                const game1 = parseInt(document.getElementById(`score-${team}-ch1-game1`).value) || 0;
+                const game2 = parseInt(document.getElementById(`score-${team}-ch1-game2`).value) || 0;
+                total = game1 + game2;
+            } else if (challenge === 'ch2') {
+                const game1 = parseInt(document.getElementById(`score-${team}-ch2-game1`).value) || 0;
+                const game2 = parseInt(document.getElementById(`score-${team}-ch2-game2`).value) || 0;
+                total = game1 + game2;
+            } else if (challenge === 'ch3') {
+                const frontline = parseInt(document.getElementById(`score-${team}-ch3-frontline`).value) || 0;
+                const teamScore = parseInt(document.getElementById(`score-${team}-ch3-team`).value) || 0;
+                total = frontline + teamScore;
+            }
+            
+            // Update total display
+            const totalSpan = document.getElementById(`total-${team}-${challenge}`);
+            if (totalSpan) {
+                totalSpan.textContent = total;
+            }
+            
+            // Save to Firebase (both game scores and total)
+            if (database && window.firebaseDB) {
+                const { ref, update } = window.firebaseDB;
+                const updates = {
+                    [`${challenge}`]: total,
+                    [`${challenge}_${game}`]: gameValue
+                };
+                
+                update(ref(database, `scores/${team}`), updates).then(() => {
+                    showSyncIndicator('✅ Score updated');
+                }).catch(error => {
+                    console.error('Error updating score:', error);
+                    showSyncIndicator('❌ Update failed');
+                });
+            }
         }
 
         window.updateScore = function(team, challenge, value) {
@@ -1096,10 +1247,30 @@
             const { ref, update } = window.firebaseDB;
             const scores = {};
             
-            challenges.forEach(ch => {
-                const input = document.getElementById(`score-${team}-${ch}`);
-                scores[ch] = parseInt(input.value) || 0;
-            });
+            // Challenge 1: Game-level scores
+            const ch1Game1 = parseInt(document.getElementById(`score-${team}-ch1-game1`)?.value) || 0;
+            const ch1Game2 = parseInt(document.getElementById(`score-${team}-ch1-game2`)?.value) || 0;
+            scores.ch1 = ch1Game1 + ch1Game2;
+            scores.ch1_game1 = ch1Game1;
+            scores.ch1_game2 = ch1Game2;
+            
+            // Challenge 2: Game-level scores
+            const ch2Game1 = parseInt(document.getElementById(`score-${team}-ch2-game1`)?.value) || 0;
+            const ch2Game2 = parseInt(document.getElementById(`score-${team}-ch2-game2`)?.value) || 0;
+            scores.ch2 = ch2Game1 + ch2Game2;
+            scores.ch2_game1 = ch2Game1;
+            scores.ch2_game2 = ch2Game2;
+            
+            // Challenge 3: Game-level scores
+            const ch3Frontline = parseInt(document.getElementById(`score-${team}-ch3-frontline`)?.value) || 0;
+            const ch3Team = parseInt(document.getElementById(`score-${team}-ch3-team`)?.value) || 0;
+            scores.ch3 = ch3Frontline + ch3Team;
+            scores.ch3_frontline = ch3Frontline;
+            scores.ch3_team = ch3Team;
+            
+            // Challenge 4: Simple total
+            const ch4Input = document.getElementById(`score-${team}-ch4`);
+            scores.ch4 = parseInt(ch4Input?.value) || 0;
             
             update(ref(database, `scores/${team}`), scores).then(() => {
                 showSyncIndicator(`✅ ${team} scores saved`);
@@ -1112,12 +1283,39 @@
         function updateScoreInputs(scores) {
             teamNames.forEach(team => {
                 const teamScores = scores[team] || {};
-                challenges.forEach(ch => {
-                    const input = document.getElementById(`score-${team}-${ch}`);
-                    if (input && teamScores[ch] !== undefined) {
-                        input.value = teamScores[ch];
-                    }
-                });
+                
+                // Challenge 1: Load game-level scores
+                const ch1Game1Input = document.getElementById(`score-${team}-ch1-game1`);
+                const ch1Game2Input = document.getElementById(`score-${team}-ch1-game2`);
+                if (ch1Game1Input) ch1Game1Input.value = teamScores.ch1_game1 || 0;
+                if (ch1Game2Input) ch1Game2Input.value = teamScores.ch1_game2 || 0;
+                const ch1Total = (teamScores.ch1_game1 || 0) + (teamScores.ch1_game2 || 0);
+                const ch1TotalSpan = document.getElementById(`total-${team}-ch1`);
+                if (ch1TotalSpan) ch1TotalSpan.textContent = ch1Total;
+                
+                // Challenge 2: Load game-level scores
+                const ch2Game1Input = document.getElementById(`score-${team}-ch2-game1`);
+                const ch2Game2Input = document.getElementById(`score-${team}-ch2-game2`);
+                if (ch2Game1Input) ch2Game1Input.value = teamScores.ch2_game1 || 0;
+                if (ch2Game2Input) ch2Game2Input.value = teamScores.ch2_game2 || 0;
+                const ch2Total = (teamScores.ch2_game1 || 0) + (teamScores.ch2_game2 || 0);
+                const ch2TotalSpan = document.getElementById(`total-${team}-ch2`);
+                if (ch2TotalSpan) ch2TotalSpan.textContent = ch2Total;
+                
+                // Challenge 3: Load game-level scores
+                const ch3FrontlineInput = document.getElementById(`score-${team}-ch3-frontline`);
+                const ch3TeamInput = document.getElementById(`score-${team}-ch3-team`);
+                if (ch3FrontlineInput) ch3FrontlineInput.value = teamScores.ch3_frontline || 0;
+                if (ch3TeamInput) ch3TeamInput.value = teamScores.ch3_team || 0;
+                const ch3Total = (teamScores.ch3_frontline || 0) + (teamScores.ch3_team || 0);
+                const ch3TotalSpan = document.getElementById(`total-${team}-ch3`);
+                if (ch3TotalSpan) ch3TotalSpan.textContent = ch3Total;
+                
+                // Challenge 4: Simple total
+                const ch4Input = document.getElementById(`score-${team}-ch4`);
+                if (ch4Input && teamScores.ch4 !== undefined) {
+                    ch4Input.value = teamScores.ch4;
+                }
             });
         }
 
