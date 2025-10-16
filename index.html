@@ -202,6 +202,70 @@
             font-weight: bold;
         }
         
+        /* Team Name Hover Tooltip */
+        .team-name-cell {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .team-name-cell:hover {
+            color: #667eea;
+        }
+        
+        .team-players-tooltip {
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-left: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .team-name-cell:hover .team-players-tooltip {
+            opacity: 1;
+            visibility: visible;
+            margin-left: 20px;
+        }
+        
+        .team-players-tooltip::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 8px solid transparent;
+            border-right-color: #667eea;
+        }
+        
+        .tooltip-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 8px;
+        }
+        
+        .tooltip-player {
+            padding: 5px 0;
+            font-size: 13px;
+        }
+        
+        .tooltip-empty {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+        }
+        
         /* Score Management */
         .score-management {
             margin-bottom: 40px;
@@ -1037,6 +1101,8 @@
                 const players = snapshot.val() || {};
                 console.log('📊 Active Players Update:', players);
                 updatePlayersDisplay(players);
+                // Refresh leaderboard to show updated player tooltips
+                updateLeaderboard(currentScores);
             });
 
             // Listen for challenge status changes
@@ -1319,7 +1385,12 @@
             });
         }
 
+        // Store team players globally for leaderboard tooltips
+        let teamPlayersData = {};
+        let currentScores = {};
+
         function updateLeaderboard(scores) {
+            currentScores = scores;
             const tbody = document.getElementById('leaderboardBody');
             
             // Calculate totals and sort
@@ -1339,17 +1410,29 @@
             // Sort by total (descending)
             teamsData.sort((a, b) => b.total - a.total);
 
-            // Update table
-            tbody.innerHTML = teamsData.map((team, index) => `
+            // Update table with player tooltips
+            tbody.innerHTML = teamsData.map((team, index) => {
+                const players = teamPlayersData[team.name] || [];
+                const playersHtml = players.length > 0 
+                    ? players.map(p => `<div class="tooltip-player">👤 ${p}</div>`).join('')
+                    : '<div class="tooltip-empty">No players assigned yet</div>';
+                
+                return `
                 <tr>
                     <td>${index + 1}</td>
-                    <td style="text-align: left; font-weight: 600;">${team.name}</td>
+                    <td class="team-name-cell" style="text-align: left; font-weight: 600;">
+                        ${team.name}
+                        <div class="team-players-tooltip">
+                            <div class="tooltip-title">🎯 ${team.name} Players</div>
+                            ${playersHtml}
+                        </div>
+                    </td>
                     ${challenges.map(ch => `
                         <td>${team.scores[ch] || '-'}</td>
                     `).join('')}
                     <td style="font-weight: bold; color: #51cf66; font-size: 18px;">${team.total}</td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         function updatePlayersDisplay(players) {
@@ -1362,6 +1445,10 @@
             
             teamNames.forEach(team => teamPlayers[team] = {});
             
+            // Clear team players data for leaderboard tooltips
+            teamPlayersData = {};
+            teamNames.forEach(team => teamPlayersData[team] = []);
+            
             Object.values(players).forEach(player => {
                 if (player.isActive && player.team) {
                     if (teamPlayers[player.team]) {
@@ -1370,6 +1457,11 @@
                             teamPlayers[player.team][player.name] = 0;
                         }
                         teamPlayers[player.team][player.name]++;
+                        
+                        // Add to teamPlayersData for leaderboard tooltips (unique names only)
+                        if (!teamPlayersData[player.team].includes(player.name)) {
+                            teamPlayersData[player.team].push(player.name);
+                        }
                     }
                     
                     // Track how many times each name appears globally
@@ -1378,6 +1470,11 @@
                         duplicateNames.add(player.name);
                     }
                 }
+            });
+            
+            // Sort player names alphabetically in each team for tooltips
+            teamNames.forEach(team => {
+                teamPlayersData[team].sort();
             });
 
             // Build alert message if duplicates found
