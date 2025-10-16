@@ -1012,6 +1012,7 @@
         let database = null;
         let scoresRef = null;
         let playersRef = null;
+        let playerAssignmentsRef = null;
         let challengeStatusRef = null;
 
         // Initialize Firebase
@@ -1084,6 +1085,7 @@
             const { ref, onValue } = window.firebaseDB;
             scoresRef = ref(database, 'scores');
             playersRef = ref(database, 'activePlayers');
+            playerAssignmentsRef = ref(database, 'playerTeamAssignments');
             challengeStatusRef = ref(database, 'challengeStatus');
 
             // Create score management cards
@@ -1096,11 +1098,18 @@
                 updateScoreInputs(scores);
             });
 
-            // Listen for player changes
+            // Listen for player changes (for active players display)
             onValue(playersRef, (snapshot) => {
                 const players = snapshot.val() || {};
                 console.log('📊 Active Players Update:', players);
                 updatePlayersDisplay(players);
+            });
+            
+            // Listen for player team assignments (for leaderboard tooltips)
+            onValue(playerAssignmentsRef, (snapshot) => {
+                const assignments = snapshot.val() || {};
+                console.log('👥 Team Assignments Update:', assignments);
+                updateTeamPlayersDataFromAssignments(assignments);
                 // Refresh leaderboard to show updated player tooltips
                 updateLeaderboard(currentScores);
             });
@@ -1415,7 +1424,7 @@
                 const players = teamPlayersData[team.name] || [];
                 const playersHtml = players.length > 0 
                     ? players.map(p => `<div class="tooltip-player">👤 ${p}</div>`).join('')
-                    : '<div class="tooltip-empty">No players assigned yet</div>';
+                    : '<div class="tooltip-empty">No players assigned</div>';
                 
                 return `
                 <tr>
@@ -1435,6 +1444,27 @@
             `}).join('');
         }
 
+        // Update team players data from assignments for leaderboard tooltips
+        function updateTeamPlayersDataFromAssignments(assignments) {
+            // Clear team players data
+            teamPlayersData = {};
+            teamNames.forEach(team => teamPlayersData[team] = []);
+            
+            // Group all assigned players by team
+            Object.entries(assignments).forEach(([playerName, teamName]) => {
+                if (teamName && teamPlayersData[teamName]) {
+                    if (!teamPlayersData[teamName].includes(playerName)) {
+                        teamPlayersData[teamName].push(playerName);
+                    }
+                }
+            });
+            
+            // Sort player names alphabetically in each team
+            teamNames.forEach(team => {
+                teamPlayersData[team].sort();
+            });
+        }
+        
         function updatePlayersDisplay(players) {
             const container = document.getElementById('playersContainer');
             
@@ -1445,10 +1475,6 @@
             
             teamNames.forEach(team => teamPlayers[team] = {});
             
-            // Clear team players data for leaderboard tooltips
-            teamPlayersData = {};
-            teamNames.forEach(team => teamPlayersData[team] = []);
-            
             Object.values(players).forEach(player => {
                 if (player.isActive && player.team) {
                     if (teamPlayers[player.team]) {
@@ -1457,11 +1483,6 @@
                             teamPlayers[player.team][player.name] = 0;
                         }
                         teamPlayers[player.team][player.name]++;
-                        
-                        // Add to teamPlayersData for leaderboard tooltips (unique names only)
-                        if (!teamPlayersData[player.team].includes(player.name)) {
-                            teamPlayersData[player.team].push(player.name);
-                        }
                     }
                     
                     // Track how many times each name appears globally
@@ -1470,11 +1491,6 @@
                         duplicateNames.add(player.name);
                     }
                 }
-            });
-            
-            // Sort player names alphabetically in each team for tooltips
-            teamNames.forEach(team => {
-                teamPlayersData[team].sort();
             });
 
             // Build alert message if duplicates found
@@ -1868,14 +1884,17 @@
             }
         }
 
-        // All 31 player names (alphabetically sorted)
+        // All 33 player names (alphabetically sorted) - includes admin players Amrit and Anvi
         const allPlayerNames = [
-            'Aayush', 'Aayushi', 'Abhishek', 'Adwait', 'Arnab', 'Avirup', 'Biranchi',
+            'Aayush', 'Aayushi', 'Abhishek', 'Adwait', 'Amrit', 'Anvi', 'Arnab', 'Avirup', 'Biranchi',
             'Deepali', 'Deepika', 'Dipendu', 'Harshal', 'Indira', 'Kevin', 'Maria',
             'Meet', 'Minal', 'Namy', 'Nikunj', 'Prashanth', 'Priyanka', 'Ryan',
             'Sampada', 'Sharan', 'Shaswat', 'Shreeya', 'Sid', 'Sophia', 'Supriya',
             'Swati', 'Tithi', 'Vraja'
         ];
+        
+        // Admin players who should not be assigned to teams
+        const adminPlayers = ['Amrit', 'Anvi'];
 
         // Player Management Functions
         
@@ -1923,9 +1942,9 @@
                     }
                 } else {
                     console.log('ℹ️ No players in Firebase, initializing with defaults...');
-                    // Initialize with default player list
+                    // Initialize with default player list (includes admin players)
                     players = [
-                        'Aayush', 'Aayushi', 'Abhishek', 'Adwait', 'Arnab', 'Avirup', 'Biranchi',
+                        'Aayush', 'Aayushi', 'Abhishek', 'Adwait', 'Amrit', 'Anvi', 'Arnab', 'Avirup', 'Biranchi',
                         'Deepali', 'Deepika', 'Dipendu', 'Harshal', 'Indira', 'Kevin', 'Maria',
                         'Meet', 'Minal', 'Namy', 'Nikunj', 'Prashanth', 'Priyanka', 'Ryan',
                         'Sampada', 'Sharan', 'Shaswat', 'Shreeya', 'Sid', 'Sophia', 'Supriya',
@@ -2117,7 +2136,7 @@
             }
             
             const defaultPlayers = [
-                'Aayush', 'Aayushi', 'Abhishek', 'Adwait', 'Arnab', 'Avirup', 'Biranchi',
+                'Aayush', 'Aayushi', 'Abhishek', 'Adwait', 'Amrit', 'Anvi', 'Arnab', 'Avirup', 'Biranchi',
                 'Deepali', 'Deepika', 'Dipendu', 'Harshal', 'Indira', 'Kevin', 'Maria',
                 'Meet', 'Minal', 'Namy', 'Nikunj', 'Prashanth', 'Priyanka', 'Ryan',
                 'Sampada', 'Sharan', 'Shaswat', 'Shreeya', 'Sid', 'Sophia', 'Supriya',
@@ -2323,7 +2342,8 @@
                 `This will use a consistent algorithm to distribute:\n` +
                 `• Swati's team: 6 players\n` +
                 `• Other teams: 5 players each\n` +
-                `• Total: 31 players across 6 teams\n\n` +
+                `• Total: 31 players across 6 teams\n` +
+                `• Amrit & Anvi (admins) will NOT be assigned to teams\n\n` +
                 `The same algorithm will produce the same teams every time.\n\n` +
                 `Existing assignments will be overwritten.\n\n` +
                 `Continue?`
@@ -2362,8 +2382,10 @@
                 teamCounts[swatiTeam] = 1;
                 
                 // Step 4: Sort remaining players alphabetically for consistent ordering
+                // Exclude admin players (Amrit and Anvi) from team assignments
                 const remainingPlayers = allPlayerNames
                     .filter(name => name !== 'Swati')
+                    .filter(name => !adminPlayers.includes(name)) // Exclude admins
                     .sort();
                 
                 // Step 5: Assign remaining players using consistent hash
