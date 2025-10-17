@@ -742,7 +742,7 @@
             <div class="leaderboard-section" style="margin-top: 30px;">
                 <h2 class="section-title">🎯 Manual Team Assignment</h2>
                 <p style="text-align: center; color: #666; margin-bottom: 20px;">
-                    Manually assign players to teams. Standard teams: 5 players. ⭐ Teams with Swati: 6 players.
+                    Manually assign players to teams. Standard teams: 6 players. ⭐ Teams with Swati: 7 players.
                 </p>
                 <div style="background: #f8f9fa; border-radius: 12px; padding: 25px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -1518,11 +1518,11 @@
                 const playerNames = Object.keys(playerCounts);
                 const uniquePlayerCount = playerNames.length;
                 
-                // Check if Swati is in this team (6 players allowed, otherwise 5)
+                // Check if Swati is in this team (7 players allowed, otherwise 6)
                 const hasSwati = playerNames.includes('Swati');
-                const maxCapacity = hasSwati ? 6 : 5;
+                const maxCapacity = hasSwati ? 7 : 6;
                 const capacityColor = uniquePlayerCount >= maxCapacity ? '#e74c3c' : '#27ae60';
-                const capacityIndicator = hasSwati ? '👥 Max: 6 (Swati\'s team)' : '👥 Max: 5';
+                const capacityIndicator = hasSwati ? '👥 Max: 7 (Swati\'s team)' : '👥 Max: 6';
                 
                 return `
                     <div class="team-players">
@@ -2214,7 +2214,7 @@
                 teamNames.forEach(team => {
                     const players = teamPlayers[team] || [];
                     const hasSwati = players.some(p => p === 'Swati');
-                    const expectedCount = hasSwati ? 6 : 5;
+                    const expectedCount = hasSwati ? 7 : 6;
                     if (teamCounts[team] !== expectedCount) {
                         allValid = false;
                     }
@@ -2233,7 +2233,7 @@
                 teamNames.forEach(team => {
                     const players = teamPlayers[team] || [];
                     const hasSwati = players.some(p => p === 'Swati');
-                    const maxCapacity = hasSwati ? 6 : 5;
+                    const maxCapacity = hasSwati ? 7 : 6;
                     const isValid = players.length === maxCapacity;
                     const capacityColor = players.length === maxCapacity ? '#27ae60' : players.length > maxCapacity ? '#e74c3c' : '#f39c12';
                     html += `
@@ -2243,7 +2243,7 @@
                                 <span style="font-size: 14px; color: ${capacityColor};">${players.length}/${maxCapacity}</span>
                             </h3>
                             <div style="font-size: 11px; color: ${hasSwati ? '#f59e0b' : '#999'}; margin-bottom: 10px;">
-                                ${hasSwati ? '⭐ Swati\'s team (6 players max)' : 'Standard team (5 players max)'}
+                                ${hasSwati ? '⭐ Swati\'s team (7 players max)' : 'Standard team (6 players max)'}
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 ${players.map(p => `
@@ -2331,14 +2331,14 @@
             return Math.abs(hash);
         }
 
-        // Auto-assign all players using consistent algorithm (Swati's team gets 6, others get 5)
+        // Auto-assign all players using consistent algorithm (Swati's team gets 7, others get 6)
         window.autoAssignPlayers = async function() {
             const confirmed = confirm(
                 `✨ Auto-Assign All Players (Deterministic)\n\n` +
                 `This will use a consistent algorithm to distribute:\n` +
-                `• Swati's team: 6 players\n` +
-                `• Other teams: 5 players each\n` +
-                `• Total: 31 players across 6 teams\n` +
+                `• Swati's team: 7 players\n` +
+                `• Other teams: 6 players each\n` +
+                `• Total: 31 players across 5 teams\n` +
                 `• Amrit & Anvi (admins) will NOT be assigned to teams\n\n` +
                 `The same algorithm will produce the same teams every time.\n\n` +
                 `Existing assignments will be overwritten.\n\n` +
@@ -2365,7 +2365,7 @@
                 // Step 2: Create team capacity tracker
                 const teamCapacity = {};
                 teamNames.forEach(team => {
-                    teamCapacity[team] = team === swatiTeam ? 6 : 5;
+                    teamCapacity[team] = team === swatiTeam ? 7 : 6;
                 });
                 
                 const teamCounts = {};
@@ -2415,7 +2415,7 @@
                     .map(([team, count]) => `${team}: ${count}${team === swatiTeam ? ' ⭐' : ''}`)
                     .join('\n');
                 
-                alert(`✅ Successfully assigned all 31 players!\n\n${summary}`);
+                alert(`✅ Successfully assigned all 31 players across 5 teams!\n\n${summary}`);
                 
                 // Reload to show new assignments
                 await loadPlayerAssignments();
