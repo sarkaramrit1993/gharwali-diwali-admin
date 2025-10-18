@@ -830,7 +830,7 @@
             <div class="leaderboard-section" style="margin-top: 30px;">
                 <h2 class="section-title">🏠 Challenge 4 - Team Markings</h2>
                 <p style="text-align: center; color: #666; margin-bottom: 20px;">
-                    View all team markings and progress in The Great Item Hunt challenge. Manually validate and assign scores based on accuracy.
+                    View all team markings and progress in The Ultimate Spot Finder challenge. Manually validate and assign scores based on accuracy.
                 </p>
                 <button onclick="loadAllTeamMarkings()" 
                         style="display: block; margin: 0 auto 20px; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s;">
@@ -1094,20 +1094,7 @@
                 updateScoreInputs(scores);
             });
 
-            // Load team assignments first (initial load)
-            get(playerAssignmentsRef).then(assignmentSnapshot => {
-                currentTeamAssignments = assignmentSnapshot.val() || {};
-                console.log('📋 Initial Team Assignments Loaded:', currentTeamAssignments);
-                
-                // Now start listening for player changes (for active players display)
-                onValue(playersRef, (snapshot) => {
-                    const players = snapshot.val() || {};
-                    console.log('📊 Active Players Update:', players);
-                    updatePlayersDisplay(players);
-                });
-            });
-            
-            // Listen for player team assignments (for leaderboard tooltips and active players display)
+            // Listen for player team assignments FIRST (so assignments are always loaded)
             onValue(playerAssignmentsRef, (snapshot) => {
                 const assignments = snapshot.val() || {};
                 console.log('👥 Team Assignments Update:', assignments);
@@ -1117,16 +1104,16 @@
                 
                 updateTeamPlayersDataFromAssignments(assignments);
                 
-                // Refresh active players display to reflect team changes
-                const { ref, get } = window.firebaseDB;
-                const playersRef = ref(database, 'players');
-                get(playersRef).then(playerSnapshot => {
-                    const players = playerSnapshot.val() || {};
-                    updatePlayersDisplay(players);
-                });
-                
                 // Refresh leaderboard to show updated player tooltips
                 updateLeaderboard(currentScores);
+            });
+            
+            // Listen for active players changes (this will use currentTeamAssignments)
+            onValue(playersRef, (snapshot) => {
+                const players = snapshot.val() || {};
+                console.log('📊 Active Players Update:', players);
+                console.log('📋 Using Team Assignments:', currentTeamAssignments);
+                updatePlayersDisplay(players);
             });
 
             // Listen for challenge status changes
@@ -1182,21 +1169,22 @@
                     <!-- Challenge 2: Two Games -->
                     <div class="challenge-input" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                         <label style="font-weight: bold; color: #f59e0b; margin-bottom: 8px; display: block;">Challenge 2: Party Games</label>
+                        <p style="font-size: 11px; color: #666; margin: 0 0 8px 0;">Game 1: 2 rounds per team (Win=20pts, Lose=0pts) | Game 2: Right=+5pts, Wrong=-5pts</p>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                             <div>
-                                <label style="font-size: 12px; color: #666;">Game 1 (Winner=20)</label>
+                                <label style="font-size: 12px; color: #666;">Game 1 (2 rounds, 20pts each)</label>
                                 <input 
                                     type="number" 
                                     id="score-${team}-ch2-game1" 
                                     placeholder="0"
                                     min="0"
-                                    max="20"
+                                    max="40"
                                     step="20"
                                     onchange="updateGameScore('${team}', 'ch2', 'game1', this.value)"
                                     style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 6px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; color: #666;">Game 2 (+5/-5)</label>
+                                <label style="font-size: 12px; color: #666;">Game 2 (Right=+5, Wrong=-5)</label>
                                 <input 
                                     type="number" 
                                     id="score-${team}-ch2-game2" 
@@ -1214,28 +1202,28 @@
                     <!-- Challenge 3: Trivia Competition -->
                     <div class="challenge-input" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                         <label style="font-weight: bold; color: #51cf66; margin-bottom: 8px; display: block;">Challenge 3: Trivia Competition</label>
-                        <p style="font-size: 11px; color: #666; margin: 0 0 8px 0;">6 sets × 6 questions | All frontline players compete for each question</p>
+                        <p style="font-size: 11px; color: #666; margin: 0 0 8px 0;">3 sets × 12 questions | 2 frontline players per team | 10s timer | Max 2 guesses | MVP plays 2 rounds</p>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                             <div>
-                                <label style="font-size: 12px; color: #666;">Fastest Correct (5pts each)</label>
+                                <label style="font-size: 12px; color: #666;">Frontline Correct (5pts each)</label>
                                 <input 
                                     type="number" 
                                     id="score-${team}-ch3-frontline" 
                                     placeholder="0"
                                     min="0"
-                                    max="30"
+                                    max="180"
                                     step="5"
                                     onchange="updateGameScore('${team}', 'ch3', 'frontline', this.value)"
                                     style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 6px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; color: #666;">Team Fallback (3pts each)</label>
+                                <label style="font-size: 12px; color: #666;">Team Answer (3pts each)</label>
                                 <input 
                                     type="number" 
                                     id="score-${team}-ch3-team" 
                                     placeholder="0"
                                     min="0"
-                                    max="18"
+                                    max="108"
                                     step="3"
                                     onchange="updateGameScore('${team}', 'ch3', 'team', this.value)"
                                     style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 6px;">
@@ -1248,13 +1236,13 @@
                     
                     <!-- Challenge 4: Simple Total -->
                     <div class="challenge-input">
-                        <label>Challenge 4: The Great Item Hunt</label>
+                        <label>Challenge 4: The Ultimate Spot Finder</label>
+                        <p style="font-size: 11px; color: #666; margin: 4px 0 8px 0;">✅ Correct: +5pts | ❌ False: -5pts | 81 total locations</p>
                         <input 
                             type="number" 
                             id="score-${team}-ch4" 
                             placeholder="0"
-                            min="0"
-                            step="1"
+                            step="5"
                             onchange="updateScore('${team}', 'ch4', this.value)"
                         >
                     </div>
@@ -1791,7 +1779,6 @@
                 'laundry': 'Laundry',
                 'bathroom': 'Bathroom',
                 'office': 'Office',
-                'coat-closet': 'Coat Closet',
                 'stairs': 'Stairs',
                 'dining-room': 'Dining Room',
                 'living-room': 'Living Room'
