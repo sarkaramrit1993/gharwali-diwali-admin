@@ -376,83 +376,83 @@
     <script>
         // Build all performance cards - each player gets their own slide
         const performances = [
-            // Round 1
+            // Round 1 - Player 3 odd
             { round: 1, player: 1, song: "Tune Maari Entriyaan" },
             { round: 1, player: 2, song: "Tune Maari Entriyaan" },
             { round: 1, player: 3, song: "Tattad Tattad" },
-            // Round 2
+            // Round 2 - Player 1 odd
             { round: 2, player: 1, song: "Tauba Tauba" },
             { round: 2, player: 2, song: "Hud Hud Dabangg" },
             { round: 2, player: 3, song: "Hud Hud Dabangg" },
-            // Round 3
-            { round: 3, player: 1, song: "Saturday Saturday" },
-            { round: 3, player: 2, song: "Badtameez Dil" },
+            // Round 3 - Player 2 odd
+            { round: 3, player: 1, song: "Badtameez Dil" },
+            { round: 3, player: 2, song: "Saturday Saturday" },
             { round: 3, player: 3, song: "Badtameez Dil" },
-            // Round 4
+            // Round 4 - Player 3 odd
             { round: 4, player: 1, song: "Chaiyya Chaiyya" },
             { round: 4, player: 2, song: "Chaiyya Chaiyya" },
             { round: 4, player: 3, song: "Kala Chashma" },
-            // Round 5
-            { round: 5, player: 1, song: "Dhoom Machale" },
+            // Round 5 - Player 1 odd
+            { round: 5, player: 1, song: "Kala Chashma" },
             { round: 5, player: 2, song: "Dhoom Machale" },
-            { round: 5, player: 3, song: "Kala Chashma" },
-            // Round 6
+            { round: 5, player: 3, song: "Dhoom Machale" },
+            // Round 6 - Player 1 odd
             { round: 6, player: 1, song: "Mauja Hi Mauja" },
             { round: 6, player: 2, song: "Desi Girl" },
             { round: 6, player: 3, song: "Desi Girl" },
-            // Round 7
+            // Round 7 - Player 2 odd
             { round: 7, player: 1, song: "Chammak Challo" },
             { round: 7, player: 2, song: "Ghungroo" },
             { round: 7, player: 3, song: "Chammak Challo" },
-            // Round 8
+            // Round 8 - Player 3 odd
             { round: 8, player: 1, song: "Tauba Tauba" },
             { round: 8, player: 2, song: "Tauba Tauba" },
             { round: 8, player: 3, song: "Lungi Dance" },
-            // Round 9
+            // Round 9 - Player 2 odd
             { round: 9, player: 1, song: "It's The Time To Disco" },
-            { round: 9, player: 2, song: "It's The Time To Disco" },
-            { round: 9, player: 3, song: "Mauja Hi Mauja" },
-            // Round 10
+            { round: 9, player: 2, song: "Mauja Hi Mauja" },
+            { round: 9, player: 3, song: "It's The Time To Disco" },
+            // Round 10 - Player 2 odd
             { round: 10, player: 1, song: "Gallan Goodiyaan" },
             { round: 10, player: 2, song: "Dola Re Dola" },
             { round: 10, player: 3, song: "Gallan Goodiyaan" },
-            // Round 11
+            // Round 11 - Player 3 odd
             { round: 11, player: 1, song: "Lungi Dance" },
             { round: 11, player: 2, song: "Lungi Dance" },
             { round: 11, player: 3, song: "Jeene Ke Hai Chaar Din" },
-            // Round 12
-            { round: 12, player: 1, song: "Chikni Chameli" },
+            // Round 12 - Player 1 odd
+            { round: 12, player: 1, song: "Nagada Nagada" },
             { round: 12, player: 2, song: "Chikni Chameli" },
-            { round: 12, player: 3, song: "Nagada Nagada" },
-            // Round 13
+            { round: 12, player: 3, song: "Chikni Chameli" },
+            // Round 13 - Player 2 odd
             { round: 13, player: 1, song: "Aankh Marey" },
             { round: 13, player: 2, song: "Saturday Saturday" },
             { round: 13, player: 3, song: "Aankh Marey" },
-            // Round 14
+            // Round 14 - Player 3 odd
             { round: 14, player: 1, song: "Dola Re Dola" },
-            { round: 14, player: 2, song: "Sheila Ki Jawani" },
-            { round: 14, player: 3, song: "Dola Re Dola" },
-            // Round 15
+            { round: 14, player: 2, song: "Dola Re Dola" },
+            { round: 14, player: 3, song: "Sheila Ki Jawani" },
+            // Round 15 - Player 1 odd
             { round: 15, player: 1, song: "Tune Maari Entriyaan" },
             { round: 15, player: 2, song: "Sheila Ki Jawani" },
             { round: 15, player: 3, song: "Sheila Ki Jawani" },
-            // Round 16
+            // Round 16 - Player 3 odd
             { round: 16, player: 1, song: "Balam Pichkari" },
             { round: 16, player: 2, song: "Balam Pichkari" },
             { round: 16, player: 3, song: "Ghungroo" },
-            // Round 17
+            // Round 17 - Player 1 odd
             { round: 17, player: 1, song: "Dhoom Machale" },
             { round: 17, player: 2, song: "Maar Dala" },
             { round: 17, player: 3, song: "Maar Dala" },
-            // Round 18
+            // Round 18 - Player 2 odd
             { round: 18, player: 1, song: "Fevicol Se" },
-            { round: 18, player: 2, song: "Fevicol Se" },
-            { round: 18, player: 3, song: "It's The Time To Disco" },
-            // Round 19
+            { round: 18, player: 2, song: "It's The Time To Disco" },
+            { round: 18, player: 3, song: "Fevicol Se" },
+            // Round 19 - Player 3 odd
             { round: 19, player: 1, song: "Bijli Bijli" },
             { round: 19, player: 2, song: "Bijli Bijli" },
             { round: 19, player: 3, song: "Jeene Ke Hai Chaar Din" },
-            // Round 20
+            // Round 20 - Player 2 odd
             { round: 20, player: 1, song: "Tattad Tattad" },
             { round: 20, player: 2, song: "Chaiyya Chaiyya" },
             { round: 20, player: 3, song: "Tattad Tattad" }

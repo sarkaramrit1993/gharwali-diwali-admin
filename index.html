@@ -1101,11 +1101,24 @@
                 updatePlayersDisplay(players);
             });
             
-            // Listen for player team assignments (for leaderboard tooltips)
+            // Listen for player team assignments (for leaderboard tooltips and active players display)
             onValue(playerAssignmentsRef, (snapshot) => {
                 const assignments = snapshot.val() || {};
                 console.log('👥 Team Assignments Update:', assignments);
+                
+                // Store assignments globally for active players display
+                currentTeamAssignments = assignments;
+                
                 updateTeamPlayersDataFromAssignments(assignments);
+                
+                // Refresh active players display to reflect team changes
+                const { ref, get } = window.firebaseDB;
+                const playersRef = ref(database, 'players');
+                get(playersRef).then(playerSnapshot => {
+                    const players = playerSnapshot.val() || {};
+                    updatePlayersDisplay(players);
+                });
+                
                 // Refresh leaderboard to show updated player tooltips
                 updateLeaderboard(currentScores);
             });
@@ -1461,6 +1474,9 @@
             });
         }
         
+        // Store current team assignments globally
+        let currentTeamAssignments = {};
+
         function updatePlayersDisplay(players) {
             const container = document.getElementById('playersContainer');
             
@@ -1472,13 +1488,16 @@
             teamNames.forEach(team => teamPlayers[team] = {});
             
             Object.values(players).forEach(player => {
-                if (player.isActive && player.team) {
-                    if (teamPlayers[player.team]) {
+                if (player.isActive && player.name) {
+                    // Use assigned team if available, otherwise fall back to player's team
+                    const assignedTeam = currentTeamAssignments[player.name] || player.team;
+                    
+                    if (assignedTeam && teamPlayers[assignedTeam]) {
                         // Count occurrences of each name within the team
-                        if (!teamPlayers[player.team][player.name]) {
-                            teamPlayers[player.team][player.name] = 0;
+                        if (!teamPlayers[assignedTeam][player.name]) {
+                            teamPlayers[assignedTeam][player.name] = 0;
                         }
-                        teamPlayers[player.team][player.name]++;
+                        teamPlayers[assignedTeam][player.name]++;
                     }
                     
                     // Track how many times each name appears globally
