@@ -1094,11 +1094,17 @@
                 updateScoreInputs(scores);
             });
 
-            // Listen for player changes (for active players display)
-            onValue(playersRef, (snapshot) => {
-                const players = snapshot.val() || {};
-                console.log('📊 Active Players Update:', players);
-                updatePlayersDisplay(players);
+            // Load team assignments first (initial load)
+            get(playerAssignmentsRef).then(assignmentSnapshot => {
+                currentTeamAssignments = assignmentSnapshot.val() || {};
+                console.log('📋 Initial Team Assignments Loaded:', currentTeamAssignments);
+                
+                // Now start listening for player changes (for active players display)
+                onValue(playersRef, (snapshot) => {
+                    const players = snapshot.val() || {};
+                    console.log('📊 Active Players Update:', players);
+                    updatePlayersDisplay(players);
+                });
             });
             
             // Listen for player team assignments (for leaderboard tooltips and active players display)
